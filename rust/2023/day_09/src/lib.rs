@@ -1,13 +1,9 @@
-fn parse(input: &str) -> Vec<Vec<i64>> {
-    input
-        .trim()
-        .lines()
-        .map(|line| {
-            line.split_whitespace()
-                .filter_map(|v| v.parse().ok())
-                .collect()
-        })
-        .collect()
+fn parse(input: &str) -> impl Iterator<Item = Vec<i64>> + '_ {
+    input.trim().lines().map(|line| {
+        line.split_whitespace()
+            .filter_map(|v| v.parse().ok())
+            .collect()
+    })
 }
 
 fn next_sequence_value(input: &[i64]) -> i64 {
@@ -37,11 +33,11 @@ fn prev_sequence_value(input: &[i64]) -> i64 {
 }
 
 pub fn part_one(input: &str) -> i64 {
-    parse(input).iter().map(|l| next_sequence_value(l)).sum()
+    parse(input).map(|l| next_sequence_value(&l)).sum()
 }
 
 pub fn part_two(input: &str) -> i64 {
-    parse(input).iter().map(|l| prev_sequence_value(l)).sum()
+    parse(input).map(|l| prev_sequence_value(&l)).sum()
 }
 
 #[cfg(test)]

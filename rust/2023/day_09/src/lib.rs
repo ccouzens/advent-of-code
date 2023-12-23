@@ -30,10 +30,10 @@ fn prev_sequence_value(input: &[i64]) -> i64 {
     let differences: Vec<i64> = input
         .iter()
         .zip(input.iter().skip(1))
-        .map(|(a, b)| a - b)
+        .map(|(a, b)| b - a)
         .collect();
 
-    prev_sequence_value(&differences) + input.first().unwrap()
+    -prev_sequence_value(&differences) + input.first().unwrap()
 }
 
 pub fn part_one(input: &str) -> i64 {

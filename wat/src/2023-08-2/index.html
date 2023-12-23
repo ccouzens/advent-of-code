@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Advent of Code 2023 day 8 part 2</title>
+  </head>
+  <style>
+    body {
+      display: grid;
+    }
+  </style>
+
+  <body>
+    <label for="maxIterations">Maximum iterations</label>
+    <input id="maxIterations" type="number" value="50000" />
+    <label for="input">Puzzle Input</label>
+    <textarea id="input" rows="20">
+    LR
+
+    11A = (11B, XXX)
+    11B = (XXX, 11Z)
+    11Z = (11B, XXX)
+    22A = (22B, XXX)
+    22B = (22C, 22C)
+    22C = (22Z, 22Z)
+    22Z = (22B, 22B)
+    XXX = (XXX, XXX)
+  </textarea
+    >
+    <button id="submit">Submit</button>
+    <label for="output">Puzzle Answer</label>
+    <pre id="output"></pre>
+    <label for="ghostInfo">👻 info</label>
+    <div id="ghostInfo"></div>
+    <script type="module">
+      import { main } from "./script.js";
+      main().catch(console.error);
+    </script>
+  </body>
+</html>

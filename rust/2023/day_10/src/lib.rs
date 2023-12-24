@@ -8,7 +8,39 @@ pub enum Direction {
     West,
 }
 
-pub struct Grid(Vec<Vec<u8>>);
+impl Direction {
+    fn opposite(&self) -> Self {
+        match self {
+            Direction::North => Direction::South,
+            Direction::East => Direction::West,
+            Direction::South => Direction::North,
+            Direction::West => Direction::East,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Cell(u8);
+
+impl Cell {
+    fn goes_direction(&self, direction: Direction) -> bool {
+        matches!(
+            (self.0, direction),
+            (b'|', Direction::North | Direction::South)
+                | (b'-', Direction::East | Direction::West)
+                | (b'L', Direction::North | Direction::East)
+                | (b'J', Direction::North | Direction::West)
+                | (b'7', Direction::South | Direction::West)
+                | (b'F', Direction::South | Direction::East)
+        )
+    }
+
+    fn is_start(&self) -> bool {
+        self.0 == b'S'
+    }
+}
+
+pub struct Grid(Vec<Vec<Cell>>);
 
 impl Grid {
     pub fn new(input: &str) -> Self {
@@ -16,15 +48,15 @@ impl Grid {
             input
                 .trim()
                 .lines()
-                .map(|l| l.trim().bytes().collect())
+                .map(|l| l.trim().bytes().map(Cell).collect())
                 .collect(),
         )
     }
 
     fn find_start(&self) -> (usize, usize) {
         for (y, line) in self.0.iter().enumerate() {
-            for (x, char) in line.iter().enumerate() {
-                if *char == b'S' {
+            for (x, cell) in line.iter().enumerate() {
+                if cell.is_start() {
                     return (x, y);
                 }
             }
@@ -54,35 +86,12 @@ impl Grid {
             }
         }
 
-        let old_pipe = self.0.get(initial_y)?.get(initial_x)?;
         let new_pipe = self.0.get(new_y)?.get(new_x)?;
-
-        if !matches!(
-            (new_pipe, direction),
-            (b'S', _)
-                | (b'|', Direction::North | Direction::South)
-                | (b'-', Direction::East | Direction::West)
-                | (b'L', Direction::South | Direction::West)
-                | (b'J', Direction::East | Direction::South)
-                | (b'7', Direction::North | Direction::East)
-                | (b'F', Direction::North | Direction::West)
-        ) {
-            return None;
+        if new_pipe.goes_direction(direction.opposite()) {
+            Some((new_x, new_y))
+        } else {
+            None
         }
-
-        if !matches!(
-            (old_pipe, direction),
-            (b'S', _)
-                | (b'|', Direction::North | Direction::South)
-                | (b'-', Direction::East | Direction::West)
-                | (b'L', Direction::North | Direction::East)
-                | (b'J', Direction::North | Direction::West)
-                | (b'7', Direction::South | Direction::West)
-                | (b'F', Direction::East | Direction::South)
-        ) {
-            return None;
-        }
-        Some((new_x, new_y))
     }
 }
 
@@ -122,7 +131,7 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        assert_eq!(part_one(include_str!("../example.txt")), 8)
+        assert_eq!(part_one(include_str!("../example-1.txt")), 8)
     }
 
     #[test]

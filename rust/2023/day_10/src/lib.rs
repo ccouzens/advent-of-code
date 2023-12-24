@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
@@ -8,18 +8,7 @@ pub enum Direction {
     West,
 }
 
-impl Direction {
-    fn opposite(&self) -> Self {
-        match self {
-            Direction::North => Direction::South,
-            Direction::East => Direction::West,
-            Direction::South => Direction::North,
-            Direction::West => Direction::East,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Cell(u8);
 
 impl Cell {
@@ -33,10 +22,6 @@ impl Cell {
                 | (b'7', Direction::South | Direction::West)
                 | (b'F', Direction::South | Direction::East)
         )
-    }
-
-    fn is_start(&self) -> bool {
-        self.0 == b'S'
     }
 }
 
@@ -56,7 +41,7 @@ impl Grid {
     fn find_start(&self) -> (usize, usize) {
         for (y, line) in self.0.iter().enumerate() {
             for (x, cell) in line.iter().enumerate() {
-                if cell.is_start() {
+                if cell.0 == b'S' {
                     return (x, y);
                 }
             }
@@ -64,11 +49,83 @@ impl Grid {
         panic!("No start token");
     }
 
+    fn normalise_start(&mut self) -> (usize, usize) {
+        let (start_x, start_y) = self.find_start();
+        let connects_north = start_y
+            .checked_sub(1)
+            .and_then(|y| self.0.get(y)?.get(start_x))
+            .map(|c| c.goes_direction(Direction::South))
+            .unwrap_or(false);
+        let connects_east = self
+            .0
+            .get(start_y)
+            .and_then(|line| line.get(start_x + 1))
+            .map(|c| c.goes_direction(Direction::West))
+            .unwrap_or(false);
+        let connects_south = self
+            .0
+            .get(start_y + 1)
+            .and_then(|line| line.get(start_x))
+            .map(|c| c.goes_direction(Direction::North))
+            .unwrap_or(false);
+        let connects_west = start_x
+            .checked_sub(1)
+            .and_then(|x| self.0.get(start_y)?.get(x))
+            .map(|c| c.goes_direction(Direction::East))
+            .unwrap_or(false);
+        self.0[start_y][start_x] = Cell(
+            match (connects_north, connects_east, connects_south, connects_west) {
+                (true, false, true, false) => b'|',
+                (false, true, false, true) => b'-',
+                (true, true, false, false) => b'L',
+                (true, false, false, true) => b'J',
+                (false, false, true, true) => b'7',
+                (false, true, true, false) => b'F',
+                _ => b'.',
+            },
+        );
+        (start_x, start_y)
+    }
+
+    fn extract_loop(mut self) -> BTreeMap<(usize, usize), Cell> {
+        let start = self.normalise_start();
+
+        let mut candidates = vec![start];
+        let mut visited = candidates
+            .iter()
+            .cloned()
+            .map(|(x, y)| ((x, y), self.0[y][x]))
+            .collect::<BTreeMap<(usize, usize), Cell>>();
+
+        while !candidates.is_empty() {
+            let mut old_candidates = std::mem::take(&mut candidates);
+            while let Some(old_candidate) = old_candidates.pop() {
+                for direction in [
+                    Direction::North,
+                    Direction::East,
+                    Direction::South,
+                    Direction::West,
+                ] {
+                    if let Some(new_candidate) = self.make_move(direction, old_candidate) {
+                        if visited
+                            .insert(new_candidate, self.0[new_candidate.1][new_candidate.0])
+                            .is_none()
+                        {
+                            candidates.push(new_candidate);
+                        }
+                    }
+                }
+            }
+        }
+        visited
+    }
+
     pub fn make_move(
         &self,
         direction: Direction,
         (initial_x, initial_y): (usize, usize),
     ) -> Option<(usize, usize)> {
+        let old_pipe = self.0.get(initial_y)?.get(initial_x)?;
         let mut new_x = initial_x;
         let mut new_y = initial_y;
         match direction {
@@ -86,8 +143,7 @@ impl Grid {
             }
         }
 
-        let new_pipe = self.0.get(new_y)?.get(new_x)?;
-        if new_pipe.goes_direction(direction.opposite()) {
+        if old_pipe.goes_direction(direction) {
             Some((new_x, new_y))
         } else {
             None
@@ -97,32 +153,19 @@ impl Grid {
 
 pub fn part_one(input: &str) -> u64 {
     let grid = Grid::new(input);
-    let mut candidates = vec![grid.find_start()];
-    let mut visited = candidates
-        .iter()
-        .cloned()
-        .collect::<HashSet<(usize, usize)>>();
-    let mut steps = 0;
 
-    while !candidates.is_empty() {
-        steps += 1;
-        let mut old_candidates = std::mem::take(&mut candidates);
-        while let Some(old_candidate) = old_candidates.pop() {
-            for direction in [
-                Direction::North,
-                Direction::East,
-                Direction::South,
-                Direction::West,
-            ] {
-                if let Some(new_candidate) = grid.make_move(direction, old_candidate) {
-                    if visited.insert(new_candidate) {
-                        candidates.push(new_candidate);
-                    }
-                }
-            }
+    let pipe_loop = grid.extract_loop();
+
+    for y in 0..150 {
+        for x in 0..150 {
+            print!(
+                "{}",
+                char::from(pipe_loop.get(&(x, y)).map(|c| c.0).unwrap_or(b' '))
+            );
         }
+        println!();
     }
-    steps - 1
+    (pipe_loop.len() / 2).try_into().unwrap()
 }
 
 #[cfg(test)]

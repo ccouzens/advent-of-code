@@ -155,17 +155,49 @@ pub fn part_one(input: &str) -> u64 {
     let grid = Grid::new(input);
 
     let pipe_loop = grid.extract_loop();
+    (pipe_loop.len() / 2).try_into().unwrap()
+}
 
-    for y in 0..150 {
-        for x in 0..150 {
-            print!(
-                "{}",
-                char::from(pipe_loop.get(&(x, y)).map(|c| c.0).unwrap_or(b' '))
-            );
+pub fn part_two(input: &str) -> u64 {
+    let grid = Grid::new(input);
+    let width = grid.0.get(0).map(|l| l.len()).unwrap_or(0);
+    let height = grid.0.len();
+
+    let pipe_loop = grid.extract_loop();
+    let mut count = 0;
+    for y in 0..height {
+        let mut is_inside = false;
+        let mut horizontal_start_from_north = false;
+        for x in 0..width {
+            let pipe = pipe_loop.get(&(x, y));
+            if pipe.is_none() && is_inside {
+                count += 1;
+                print!("x");
+            } else {
+                print!(" ");
+            }
+            match pipe {
+                Some(&Cell(b'|')) => {
+                    is_inside = !is_inside;
+                }
+                Some(&Cell(b'F')) => {
+                    horizontal_start_from_north = false;
+                }
+                Some(&Cell(b'L')) => {
+                    horizontal_start_from_north = true;
+                }
+                Some(&Cell(b'7')) => {
+                    is_inside = is_inside != horizontal_start_from_north;
+                }
+                Some(&Cell(b'J')) => {
+                    is_inside = is_inside == horizontal_start_from_north;
+                }
+                _ => {}
+            }
         }
         println!();
     }
-    (pipe_loop.len() / 2).try_into().unwrap()
+    count
 }
 
 #[cfg(test)]
@@ -181,5 +213,16 @@ mod tests {
     #[cfg(feature = "challenge")]
     fn part_one_challenge() {
         assert_eq!(part_one(include_str!("../input.txt")), 6778)
+    }
+
+    #[test]
+    fn part_two_example() {
+        assert_eq!(part_two(include_str!("../example-2.txt")), 10)
+    }
+
+    #[test]
+    #[cfg(feature = "challenge")]
+    fn part_two_challenge() {
+        assert_eq!(part_two(include_str!("../input.txt")), 433)
     }
 }

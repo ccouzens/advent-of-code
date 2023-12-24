@@ -27,23 +27,25 @@ impl Image {
         }
     }
 }
-pub fn part_one(input: &str) -> i64 {
+pub fn solve(input: &str, empty_space_size: i64) -> i64 {
     let image = Image::new(input);
     let mut sum = 0;
     for galaxy_a in image.galaxies.iter() {
         for galaxy_b in image.galaxies.iter() {
             if galaxy_a > galaxy_b {
                 for x in i64::min(galaxy_a.0, galaxy_b.0)..i64::max(galaxy_a.0, galaxy_b.0) {
-                    sum += 1;
-                    if !image.non_empty_vertical_space.contains(&x) {
+                    if image.non_empty_vertical_space.contains(&x) {
                         sum += 1;
+                    } else {
+                        sum += empty_space_size;
                     }
                 }
 
                 for y in i64::min(galaxy_a.1, galaxy_b.1)..i64::max(galaxy_a.1, galaxy_b.1) {
-                    sum += 1;
-                    if !image.non_empty_horizontal_space.contains(&y) {
+                    if image.non_empty_horizontal_space.contains(&y) {
                         sum += 1;
+                    } else {
+                        sum += empty_space_size;
                     }
                 }
             }
@@ -58,12 +60,23 @@ mod tests {
 
     #[test]
     fn part_one_example() {
-        assert_eq!(part_one(include_str!("../example.txt")), 374)
+        assert_eq!(solve(include_str!("../example.txt"), 2), 374)
     }
 
     #[test]
     #[cfg(feature = "challenge")]
     fn part_one_challenge() {
-        assert_eq!(part_one(include_str!("../input.txt")), 9214785)
+        assert_eq!(solve(include_str!("../input.txt"), 2), 9214785)
+    }
+
+    #[test]
+    fn part_two_example() {
+        assert_eq!(solve(include_str!("../example.txt"), 10), 1030)
+    }
+
+    #[test]
+    #[cfg(feature = "challenge")]
+    fn part_two_challenge() {
+        assert_eq!(solve(include_str!("../input.txt"), 1000000), 613686987427)
     }
 }

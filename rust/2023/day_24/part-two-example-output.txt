@@ -33,3 +33,14 @@ solve([
 -2*z - a*z -12 +34*a +4*x +c*x -20*c,
 -2*x - b*x -10 +20*b +2*y +a*y -25*a,
 ], [x, y, z, a, b, c], set=True)
+
+from sympy import solve
+from sympy.abc import x, y, z, a, b, c
+solve([
++2*y -56 -13*c +1*z +30*b -2*y +16 +19*c +1*z -22*b,
++2*z -22 -30*a -2*x +19*c -1*z -14 +22*a +2*x -18*c,
+-1*x +45 -19*b -2*y +13*a -1*x -1 +18*b +1*y -19*a,
++2*y -56 -13*c +1*z +30*b -4*y +32 +25*c +2*z -34*b,
++2*z -22 -30*a -2*x +19*c -2*z -12 +34*a +4*x -20*c,
+-1*x +45 -19*b -2*y +13*a -2*x -10 +20*b +2*y -25*a,
+], [x, y, z, a, b, c], set=True)

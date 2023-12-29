@@ -183,17 +183,18 @@ pub fn part_two(input: &str) -> String {
     }
     writeln!(&mut output, "], [x, y, z, a, b, c], set=True)").unwrap();
 
-    writeln!(&mut output).unwrap();
-
-    writeln!(&mut output, "from sympy import solve").unwrap();
-    writeln!(&mut output, "from sympy.abc import x, y, z, a, b, c").unwrap();
-    writeln!(&mut output, "solve([").unwrap();
     let loc_x_0 = hailstones[0].loc[0];
     let loc_y_0 = hailstones[0].loc[1];
     let loc_z_0 = hailstones[0].loc[2];
     let vel_x_0 = hailstones[0].velocity[0];
     let vel_y_0 = hailstones[0].velocity[1];
     let vel_z_0 = hailstones[0].velocity[2];
+
+    writeln!(&mut output).unwrap();
+
+    writeln!(&mut output, "from sympy import solve").unwrap();
+    writeln!(&mut output, "from sympy.abc import x, y, z, a, b, c").unwrap();
+    writeln!(&mut output, "solve([").unwrap();
     for hailstone in hailstones.iter().skip(1).take(2) {
         let loc_x = hailstone.loc[0];
         let loc_y = hailstone.loc[1];
@@ -240,6 +241,50 @@ pub fn part_two(input: &str) -> String {
             -loc_x * vel_y + loc_y * vel_x,
             -vel_x,
             -loc_y
+        )
+        .unwrap();
+    }
+    writeln!(&mut output, "], [x, y, z, a, b, c], set=True)").unwrap();
+    writeln!(&mut output).unwrap();
+
+    writeln!(&mut output, "from sympy import solve").unwrap();
+    writeln!(&mut output, "from sympy.abc import x, y, z, a, b, c").unwrap();
+    writeln!(&mut output, "solve([").unwrap();
+    for hailstone in hailstones.iter().skip(1).take(2) {
+        let loc_x = hailstone.loc[0];
+        let loc_y = hailstone.loc[1];
+        let loc_z = hailstone.loc[2];
+        let vel_x = hailstone.velocity[0];
+        let vel_y = hailstone.velocity[1];
+        let vel_z = hailstone.velocity[2];
+        writeln!(
+            &mut output,
+            "{:+}*y {:+} {:+}*c {:+}*z {:+}*b,",
+            -vel_z_0 + vel_z,
+            loc_y_0 * vel_z_0 - loc_z_0 * vel_y_0 - loc_y * vel_z + loc_z * vel_y,
+            -loc_y_0 + loc_y,
+            vel_y_0 - vel_y,
+            loc_z_0 - loc_z
+        )
+        .unwrap();
+        writeln!(
+            &mut output,
+            "{:+}*z {:+} {:+}*a {:+}*x {:+}*c,",
+            -vel_x_0 + vel_x,
+            loc_z_0 * vel_x_0 - loc_x_0 * vel_z_0 - loc_z * vel_x + loc_x * vel_z,
+            -loc_z_0 + loc_z,
+            vel_z_0 - vel_z,
+            loc_x_0 - loc_x
+        )
+        .unwrap();
+        writeln!(
+            &mut output,
+            "{:+}*x {:+} {:+}*b {:+}*y {:+}*a,",
+            -vel_y_0 + vel_y,
+            loc_x_0 * vel_y_0 - loc_y_0 * vel_x_0 - loc_x * vel_y + loc_y * vel_x,
+            -loc_x_0 + loc_x,
+            vel_x_0 - vel_x,
+            loc_y_0 - loc_y
         )
         .unwrap();
     }

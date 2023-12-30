@@ -288,7 +288,53 @@ pub fn part_two(input: &str) -> String {
         )
         .unwrap();
     }
-    writeln!(&mut output, "], [x, y, z, a, b, c], set=True)").unwrap();
+
+    writeln!(&mut output).unwrap();
+    for hailstone in hailstones.iter().skip(1).take(2) {
+        let loc_x = hailstone.loc[0];
+        let loc_y = hailstone.loc[1];
+        let loc_z = hailstone.loc[2];
+        let vel_x = hailstone.velocity[0];
+        let vel_y = hailstone.velocity[1];
+        let vel_z = hailstone.velocity[2];
+
+        let mut write = |a: f64, b: f64, c: f64, x: f64, y: f64, z: f64, constant: f64| {
+            writeln!(
+                &mut output,
+                "{a:+}a {b:+}b {c:+}c {x:+}x {y:+}y {z:+}z = {constant:+},"
+            )
+            .unwrap();
+        };
+
+        write(
+            0.0,
+            loc_z_0 - loc_z,
+            -loc_y_0 + loc_y,
+            0.0,
+            -vel_z_0 + vel_z,
+            vel_y_0 - vel_y,
+            -loc_y_0 * vel_z_0 + loc_z_0 * vel_y_0 + loc_y * vel_z - loc_z * vel_y,
+        );
+
+        write(
+            -loc_z_0 + loc_z,
+            0.0,
+            loc_x_0 - loc_x,
+            vel_z_0 - vel_z,
+            0.0,
+            -vel_x_0 + vel_x,
+            -loc_z_0 * vel_x_0 + loc_x_0 * vel_z_0 + loc_z * vel_x - loc_x * vel_z,
+        );
+        write(
+            loc_y_0 - loc_y,
+            -loc_x_0 + loc_x,
+            0.0,
+            -vel_y_0 + vel_y,
+            vel_x_0 - vel_x,
+            0.0,
+            -loc_x_0 * vel_y_0 + loc_y_0 * vel_x_0 + loc_x * vel_y - loc_y * vel_x,
+        );
+    }
     output
 }
 

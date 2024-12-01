@@ -5,6 +5,7 @@ use nom::{
     sequence::separated_pair,
     IResult,
 };
+use std::collections::HashMap;
 
 type Num = u32;
 type Pair = (Num, Num);
@@ -34,6 +35,18 @@ pub fn part_1(input: &str) -> Num {
         .sum()
 }
 
+pub fn part_2(input: &str) -> Num {
+    let list = parse(input);
+    let mut right_count = HashMap::<Num, Num>::new();
+    for &(_, n) in list.iter() {
+        *right_count.entry(n).or_insert(0) += 1;
+    }
+
+    list.iter()
+        .map(|&(l, _)| l * right_count.get(&l).copied().unwrap_or(0))
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -46,5 +59,15 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 1603498);
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(part_2(include_str!("../example_1.txt")), 31);
+    }
+
+    #[test]
+    fn challengepart_2() {
+        assert_eq!(part_2(include_str!("../input.txt")), 25574739);
     }
 }

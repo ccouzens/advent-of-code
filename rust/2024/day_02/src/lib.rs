@@ -19,9 +19,7 @@ fn parse(input: &str) -> Reports {
 
 fn safe_report(report: impl DoubleEndedIterator<Item = Num> + Clone) -> bool {
     (report.clone().is_sorted() || report.clone().rev().is_sorted())
-        && report
-            .clone()
-            .zip(report.clone().skip(1))
+        && Iterator::zip(report.clone(), report.clone().skip(1))
             .all(|(a, b)| (1..=3).contains(&Num::abs_diff(a, b)))
 }
 

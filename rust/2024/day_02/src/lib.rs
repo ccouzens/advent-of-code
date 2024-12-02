@@ -36,7 +36,7 @@ pub fn part_2(input: &str) -> usize {
     reports
         .iter()
         .filter(|r| {
-            (0..r.len()).any(move |i| {
+            (0..r.len()).any(|i| {
                 safe_report(
                     r.iter()
                         .enumerate()

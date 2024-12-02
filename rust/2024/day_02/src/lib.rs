@@ -17,17 +17,20 @@ fn parse(input: &str) -> Reports {
     raw.unwrap().1
 }
 
-fn safe_report(r: &[Num]) -> bool {
-    (r.iter().zip(r.iter().skip(1)).all(|(a, b)| a > b)
-        || r.iter().zip(r.iter().skip(1)).all(|(a, b)| a < b))
-        && r.iter()
-            .zip(r.iter().skip(1))
-            .all(|(&a, &b)| Num::abs_diff(a, b) <= 3)
+fn safe_report(report: impl DoubleEndedIterator<Item = Num> + Clone) -> bool {
+    (report.clone().is_sorted() || report.clone().rev().is_sorted())
+        && report
+            .clone()
+            .zip(report.clone().skip(1))
+            .all(|(a, b)| (1..=3).contains(&Num::abs_diff(a, b)))
 }
 
 pub fn part_1(input: &str) -> usize {
     let reports = parse(input);
-    reports.iter().filter(|r| safe_report(r)).count()
+    reports
+        .iter()
+        .filter(|r| safe_report(r.iter().copied()))
+        .count()
 }
 
 pub fn part_2(input: &str) -> usize {
@@ -36,9 +39,11 @@ pub fn part_2(input: &str) -> usize {
         .iter()
         .filter(|r| {
             (0..r.len()).any(move |i| {
-                let mut r_prime = (*r).clone();
-                r_prime.remove(i);
-                safe_report(&r_prime)
+                safe_report(
+                    r.iter()
+                        .enumerate()
+                        .filter_map(|(j, &n)| (i != j).then_some(n)),
+                )
             })
         })
         .count()

@@ -8,9 +8,14 @@ use nom::{
     IResult,
 };
 type Num = u64;
-type Mul = (Num, Num);
+enum Instruction {
+    Junk,
+    Mul(Num, Num),
+    Do,
+    DoNot,
+}
 
-fn parse(input: &str) -> Vec<Option<Mul>> {
+fn parse(input: &str) -> Vec<Instruction> {
     let raw: IResult<_, _> = many0(alt((
         map(
             delimited(
@@ -22,9 +27,11 @@ fn parse(input: &str) -> Vec<Option<Mul>> {
                 ),
                 char(')'),
             ),
-            Some,
+            |(a, b)| Instruction::Mul(a, b),
         ),
-        map(take(1usize), |_| None),
+        map(tag("do()"), |_| Instruction::Do),
+        map(tag("don't()"), |_| Instruction::DoNot),
+        map(take(1usize), |_| Instruction::Junk),
     )))(input);
 
     raw.unwrap().1
@@ -33,8 +40,32 @@ fn parse(input: &str) -> Vec<Option<Mul>> {
 pub fn part_1(input: &str) -> Num {
     parse(input)
         .iter()
-        .filter_map(|mul| mul.map(|(a, b)| a * b))
+        .filter_map(|instruction| {
+            if let Instruction::Mul(a, b) = instruction {
+                Some(a * b)
+            } else {
+                None
+            }
+        })
         .sum()
+}
+
+pub fn part_2(input: &str) -> Num {
+    let mut sum = 0;
+    let mut enabled = true;
+    for instruction in parse(input).iter() {
+        match instruction {
+            Instruction::Do => enabled = true,
+            Instruction::DoNot => enabled = false,
+            Instruction::Mul(a, b) => {
+                if enabled {
+                    sum += a * b
+                }
+            }
+            Instruction::Junk => {}
+        }
+    }
+    sum
 }
 
 #[cfg(test)]
@@ -49,5 +80,15 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 180233229);
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(part_2(include_str!("../example_2.txt")), 48);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(part_2(include_str!("../input.txt")), 95411583);
     }
 }

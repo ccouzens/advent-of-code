@@ -78,6 +78,32 @@ pub fn part_1(input: &str) -> usize {
         .sum()
 }
 
+pub fn part_2(input: &str) -> usize {
+    let grid = Grid::new(input);
+    grid.iterate_positions()
+        .filter(|&(x, y)| {
+            matches!(
+                (
+                    grid.get(x, y, 0, Direction::Still, Direction::Still),
+                    (
+                        grid.get(x, y, 1, Direction::Forward, Direction::Forward),
+                        grid.get(x, y, 1, Direction::Backward, Direction::Backward),
+                    ),
+                    (
+                        grid.get(x, y, 1, Direction::Forward, Direction::Backward),
+                        grid.get(x, y, 1, Direction::Backward, Direction::Forward),
+                    ),
+                ),
+                (
+                    Some('A'),
+                    (Some('M'), Some('S')) | (Some('S'), Some('M')),
+                    (Some('M'), Some('S')) | (Some('S'), Some('M')),
+                )
+            )
+        })
+        .count()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +116,15 @@ mod tests {
     #[test]
     fn test_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 2549);
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(part_2(include_str!("../example_1.txt")), 9);
+    }
+
+    #[test]
+    fn test_part_2() {
+        assert_eq!(part_2(include_str!("../input.txt")), 2003);
     }
 }

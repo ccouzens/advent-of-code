@@ -5,6 +5,7 @@ use nom::{
     sequence::separated_pair,
     IResult,
 };
+use std::cmp::Ordering;
 
 type Num = u16;
 
@@ -65,6 +66,17 @@ impl Update {
     fn middle_page_number(&self) -> Num {
         self.0[self.0.len() / 2]
     }
+
+    fn sorted_middle_page_number(&mut self, rules: &Rules) -> Num {
+        self.0.sort_by(|&a, &b| {
+            if rules.0.iter().any(|r| r.0 == a && r.1 == b) {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
+        });
+        self.middle_page_number()
+    }
 }
 
 impl Rule {
@@ -97,6 +109,17 @@ pub fn part_1(input: &str) -> Num {
         .sum()
 }
 
+pub fn part_2(input: &str) -> Num {
+    let mut world = World::parse(input);
+    world
+        .updates
+        .0
+        .iter_mut()
+        .filter(|update| !world.rules.update_is_valid(update))
+        .map(|update| update.sorted_middle_page_number(&world.rules))
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -109,5 +132,15 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 6242);
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(part_2(include_str!("../example_1.txt")), 123);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(part_2(include_str!("../input.txt")), 123);
     }
 }

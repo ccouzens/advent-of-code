@@ -114,7 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part_1() {
+    fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 2549);
     }
 
@@ -124,7 +124,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part_2() {
+    fn challenge_part_2() {
         assert_eq!(part_2(include_str!("../input.txt")), 2003);
     }
 }

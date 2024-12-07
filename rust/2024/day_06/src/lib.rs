@@ -109,8 +109,8 @@ impl Guard {
 
     fn advance(&mut self, lab: &Lab) -> bool {
         for _ in 0..2 {
-            let position_in_font = self.position_in_front();
-            if lab.is_wall(position_in_font.0, position_in_font.1) {
+            let position_in_front = self.position_in_front();
+            if lab.is_wall(position_in_front.0, position_in_front.1) {
                 self.rotate_right();
             }
         }

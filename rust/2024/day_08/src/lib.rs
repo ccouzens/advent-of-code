@@ -36,24 +36,50 @@ impl Map {
                 .flat_map(move |(i, &a)| antennas[i + 1..].iter().map(move |&b| (frequency, a, b)))
         })
     }
+
+    fn coord_inside(&self, (x, y): Coord) -> bool {
+        x >= 0 && x < self.width && y >= 0 && y < self.height
+    }
 }
 
-fn antinodes_of_antenna_pairs((ax, ay): Coord, (bx, by): Coord) -> [Coord; 2] {
+fn antinodes_of_antenna_pairs_with_distance((ax, ay): Coord, (bx, by): Coord) -> [Coord; 2] {
     [(2 * ax - bx, 2 * ay - by), (2 * bx - ax, 2 * by - ay)]
+}
+
+fn antinodes_of_antenna_pairs_in_line(
+    (ax, ay): Coord,
+    (bx, by): Coord,
+    map: &Map,
+) -> impl Iterator<Item = Coord> + '_ {
+    Iterator::chain(
+        (0..)
+            .map(move |m| (ax + m * (ax - bx), ay + m * (ay - by)))
+            .take_while(|&c| map.coord_inside(c)),
+        (1..)
+            .map(move |m| (ax - m * (ax - bx), ay - m * (ay - by)))
+            .take_while(|&c| map.coord_inside(c)),
+    )
 }
 
 pub fn part_1(input: &str) -> usize {
     let map = Map::parse(input);
     let mut antinodes = BTreeSet::<Coord>::new();
     for (_frequency, antenna_a, antenna_b) in map.iterate_frequency_pairs() {
-        for &(antinode_x, antinode_y) in antinodes_of_antenna_pairs(antenna_a, antenna_b).iter() {
-            if antinode_x >= 0
-                && antinode_x < map.width
-                && antinode_y >= 0
-                && antinode_y < map.height
-            {
-                antinodes.insert((antinode_x, antinode_y));
+        for &antinode in antinodes_of_antenna_pairs_with_distance(antenna_a, antenna_b).iter() {
+            if map.coord_inside(antinode) {
+                antinodes.insert(antinode);
             }
+        }
+    }
+    antinodes.len()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let map = Map::parse(input);
+    let mut antinodes = BTreeSet::<Coord>::new();
+    for (_frequency, antenna_a, antenna_b) in map.iterate_frequency_pairs() {
+        for antinode in antinodes_of_antenna_pairs_in_line(antenna_a, antenna_b, &map) {
+            antinodes.insert(antinode);
         }
     }
     antinodes.len()
@@ -73,5 +99,16 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 214);
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(part_2(include_str!("../example_4.txt")), 9);
+        assert_eq!(part_2(include_str!("../example_1.txt")), 34);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(part_2(include_str!("../input.txt")), 809);
     }
 }

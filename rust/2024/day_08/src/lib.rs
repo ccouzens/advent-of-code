@@ -28,12 +28,12 @@ impl Map {
         }
     }
 
-    fn iterate_frequency_pairs(&self) -> impl Iterator<Item = (char, Coord, Coord)> + '_ {
-        self.frequencies.iter().flat_map(|(&frequency, antennas)| {
+    fn iterate_frequency_pairs(&self) -> impl Iterator<Item = (Coord, Coord)> + '_ {
+        self.frequencies.values().flat_map(|antennas| {
             antennas
                 .iter()
                 .enumerate()
-                .flat_map(move |(i, &a)| antennas[i + 1..].iter().map(move |&b| (frequency, a, b)))
+                .flat_map(|(i, &a)| antennas[i + 1..].iter().map(move |&b| (a, b)))
         })
     }
 
@@ -63,25 +63,21 @@ fn antinodes_of_antenna_pairs_in_line(
 
 pub fn part_1(input: &str) -> usize {
     let map = Map::parse(input);
-    let mut antinodes = BTreeSet::<Coord>::new();
-    for (_frequency, antenna_a, antenna_b) in map.iterate_frequency_pairs() {
-        for &antinode in antinodes_of_antenna_pairs_with_distance(antenna_a, antenna_b).iter() {
-            if map.coord_inside(antinode) {
-                antinodes.insert(antinode);
-            }
-        }
-    }
+    let antinodes = BTreeSet::from_iter(
+        map.iterate_frequency_pairs()
+            .flat_map(|(a, b)| antinodes_of_antenna_pairs_with_distance(a, b))
+            .filter(|&c| map.coord_inside(c)),
+    );
+
     antinodes.len()
 }
 
 pub fn part_2(input: &str) -> usize {
     let map = Map::parse(input);
-    let mut antinodes = BTreeSet::<Coord>::new();
-    for (_frequency, antenna_a, antenna_b) in map.iterate_frequency_pairs() {
-        for antinode in antinodes_of_antenna_pairs_in_line(antenna_a, antenna_b, &map) {
-            antinodes.insert(antinode);
-        }
-    }
+    let antinodes = BTreeSet::from_iter(
+        map.iterate_frequency_pairs()
+            .flat_map(|(a, b)| antinodes_of_antenna_pairs_in_line(a, b, &map)),
+    );
     antinodes.len()
 }
 

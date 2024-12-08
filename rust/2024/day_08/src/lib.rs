@@ -13,7 +13,7 @@ impl Map {
         let mut width = 0;
         let mut height = 0;
         let mut frequencies = BTreeMap::<char, Vec<Coord>>::new();
-        for (line, y) in input.lines().filter(|l| !l.is_empty()).zip(0..) {
+        for (line, y) in input.lines().zip(0..) {
             height = y + 1;
             for (c, x) in line.chars().zip(0..) {
                 width = x + 1;

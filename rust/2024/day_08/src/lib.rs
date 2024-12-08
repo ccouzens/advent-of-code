@@ -10,12 +10,13 @@ struct Map {
 
 impl Map {
     fn parse(input: &str) -> Self {
-        let width = input.lines().next().unwrap().chars().count() as isize;
+        let mut width = 0;
         let mut height = 0;
-        let mut frequencies: BTreeMap<char, Vec<Coord>> = BTreeMap::new();
+        let mut frequencies = BTreeMap::<char, Vec<Coord>>::new();
         for (line, y) in input.lines().filter(|l| !l.is_empty()).zip(0..) {
             height = y + 1;
             for (c, x) in line.chars().zip(0..) {
+                width = x + 1;
                 if c.is_ascii_alphanumeric() {
                     frequencies.entry(c).or_default().push((x, y));
                 }

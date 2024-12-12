@@ -37,6 +37,7 @@ impl Disk {
     fn compact_whole_files(&mut self) {
         let mut largest_remaining_gap = self.blocks.len();
         let mut file_end = self.blocks.len() - 1;
+        let mut gaps_start = 0;
 
         for (i, j) in (0..self.blocks.len()).zip(1..self.blocks.len()).rev() {
             if largest_remaining_gap == 0 {
@@ -59,14 +60,19 @@ impl Disk {
                         continue;
                     }
 
-                    let mut gap_start = 0;
+                    let mut gap_start = gaps_start;
                     let mut largest_gap_this_time = 0;
-                    for (k, l) in (0..=file_start).zip(1..=file_start) {
+                    let mut seen_gap = false;
+                    for (k, l) in (gaps_start..=file_start).zip((gaps_start..=file_start).skip(1)) {
                         match (self.blocks[k], self.blocks[l]) {
                             (Some(_), None) => {
                                 gap_start = l;
                             }
                             (None, Some(_)) => {
+                                if !seen_gap {
+                                    seen_gap = true;
+                                    gaps_start = gap_start;
+                                }
                                 let gap_end = k;
                                 let gap_len = gap_end - gap_start + 1;
                                 largest_gap_this_time = usize::max(largest_gap_this_time, gap_len);
@@ -81,6 +87,9 @@ impl Disk {
                             }
                             (None, None) | (Some(_), Some(_)) => {}
                         }
+                    }
+                    if !seen_gap {
+                        break;
                     }
                     largest_remaining_gap = largest_gap_this_time;
                     file_end = i;

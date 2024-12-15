@@ -78,6 +78,18 @@ pub fn part_1(input: &str) -> Num {
         .sum()
 }
 
+pub fn part_2(input: &str) -> Num {
+    let mut claw_machines = parse_claw_machines(input);
+    for claw_machine in claw_machines.iter_mut() {
+        claw_machine.prize.0[0] += 10000000000000;
+        claw_machine.prize.0[1] += 10000000000000;
+    }
+    claw_machines
+        .iter()
+        .filter_map(|m| m.tokens_for_prize())
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +102,10 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 28753);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(part_2(include_str!("../input.txt")), 102718967795500);
     }
 }

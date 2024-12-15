@@ -1,3 +1,5 @@
+use std::iter::repeat_n;
+
 use nom::{
     bytes::complete::tag,
     character::complete::{char, digit1, newline},
@@ -90,6 +92,50 @@ impl World {
 
         product
     }
+
+    fn draw(&self) {
+        let width = self.size[0];
+        let height = self.size[1];
+        let mut bitmap: Vec<usize> = repeat_n(0, (width * height) as usize).collect();
+        for robot in self.robots.iter() {
+            bitmap[(robot.position[0] + robot.position[1] * width) as usize] += 1
+        }
+
+        for (&b, i) in bitmap.iter().zip(0..) {
+            if b == 0 {
+                print!(" ");
+            } else {
+                print!("{}", b);
+            }
+
+            if i % width == width - 1 {
+                println!();
+            }
+        }
+    }
+
+    fn has_line_of_robots(&self) -> bool {
+        let width = self.size[0];
+        let height = self.size[1];
+        let mut bitmap: Vec<usize> = repeat_n(0, (width * height) as usize).collect();
+        for robot in self.robots.iter() {
+            bitmap[(robot.position[0] + robot.position[1] * width) as usize] += 1
+        }
+
+        let mut uninterupted_line = 0;
+        for &b in bitmap.iter() {
+            if b == 0 {
+                uninterupted_line = 0;
+            } else {
+                uninterupted_line += 1
+            }
+
+            if uninterupted_line >= 10 {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 pub fn part_1(size: Coord, input: &str) -> usize {
@@ -100,6 +146,19 @@ pub fn part_1(size: Coord, input: &str) -> usize {
     }
 
     world.safety_factor()
+}
+
+pub fn part_2(size: Coord, input: &str) -> usize {
+    let mut world = World::parse(size, input);
+
+    for i in 0.. {
+        if world.has_line_of_robots() {
+            world.draw();
+            return i;
+        }
+        world.step();
+    }
+    0
 }
 
 #[cfg(test)]
@@ -114,5 +173,10 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1([101, 103], include_str!("../input.txt")), 215476074);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(part_2([101, 103], include_str!("../input.txt")), 6285);
     }
 }

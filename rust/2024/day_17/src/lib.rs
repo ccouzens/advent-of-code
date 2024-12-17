@@ -8,7 +8,7 @@ use nom::{
     sequence::tuple,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Computer {
     registers: [Num; 3],
     code: Vec<Num>,
@@ -121,6 +121,41 @@ pub fn part_1(input: &str) -> String {
         .collect()
 }
 
+fn computer(mut a: u64, buffer: &mut Vec<u64>) {
+    buffer.clear();
+    while a != 0 {
+        let b = (a % 8) ^ 1;
+        let c = a >> (b as u32);
+        a /= 8;
+        buffer.push((b ^ 4 ^ c) % 8);
+    }
+}
+
+// Not a generalizable solution, but a scratchpad that got me my answer.
+//
+// observation that the partial solutions all ended in 0b25052
+// and used that to generate further digits quicker.
+// Next observation that the partial solutions ended in 0o37262025052.
+pub fn part_2() -> u64 {
+    let target = &[2, 4, 1, 1, 7, 5, 1, 4, 0, 3, 4, 5, 5, 5, 3, 0];
+    let mut buffer = Vec::with_capacity(16);
+
+    let mut buffer_len = 0;
+    for a in 0.. {
+        let a = a * 0o100000000000 + 0o37262025052;
+        computer(a, &mut buffer);
+        if buffer == target {
+            return a;
+        }
+
+        if buffer.len() > buffer_len && Some(buffer.as_slice()) == target.get(0..buffer.len()) {
+            buffer_len = buffer.len();
+            dbg!((a, format!("{a:o}"), format!("{a:b}"), &buffer));
+        }
+    }
+    0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -136,5 +171,15 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), "5,1,4,0,5,1,0,2,6");
+    }
+
+    // #[test]
+    // fn example_part_2() {
+    //     assert_eq!(part_2(include_str!("../example_2.txt")), 117440);
+    // }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(part_2(), 202322936867370);
     }
 }

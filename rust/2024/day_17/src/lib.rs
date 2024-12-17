@@ -133,7 +133,7 @@ fn computer(mut a: u64, buffer: &mut Vec<u64>) {
 
 // Not a generalizable solution, but a scratchpad that got me my answer.
 //
-// observation that the partial solutions all ended in 0b25052
+// observation that the partial solutions all ended in 0o25052
 // and used that to generate further digits quicker.
 // Next observation that the partial solutions ended in 0o37262025052.
 pub fn part_2() -> u64 {

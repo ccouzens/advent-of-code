@@ -85,30 +85,57 @@ impl Maze {
             && location.y >= 0
             && location.x < self.size.x
             && location.y < self.size.y
-            && !self.walls.contains(&location)
+            && !self.walls.contains(location)
+    }
+
+    fn tick(&mut self) -> bool {
+        if let Some(&wall) = self.maze_input.walls.get(self.time) {
+            self.walls.insert(wall);
+            self.time += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn time_to_end(&self) -> Option<usize> {
+        let mut visited = BTreeSet::new();
+        let mut to_visit_next = BTreeSet::new();
+        to_visit_next.insert(Coord { x: 0, y: 0 });
+
+        let mut step_count = 0;
+
+        loop {
+            if to_visit_next.is_empty() {
+                return None;
+            }
+            let to_visit = std::mem::take(&mut to_visit_next);
+            for &c in to_visit.iter() {
+                if c.x == self.size.x - 1 && c.y == self.size.y - 1 {
+                    return Some(step_count);
+                }
+                if visited.insert(c) {
+                    to_visit_next.extend(c.neighbours().iter().filter(|&n| self.is_passable(n)));
+                }
+            }
+            step_count += 1;
+        }
     }
 }
 
-pub fn part_1(input: &str, size: Coord, time: usize) -> usize {
+pub fn part_1(input: &str, size: Coord, time: usize) -> Option<usize> {
     let maze = Maze::new(input, size, time);
-    let mut visited = BTreeSet::new();
-    let mut to_visit_next = BTreeSet::new();
-    to_visit_next.insert(Coord { x: 0, y: 0 });
+    maze.time_to_end()
+}
 
-    let mut step_count = 0;
-
-    loop {
-        let to_visit = std::mem::take(&mut to_visit_next);
-        for &c in to_visit.iter() {
-            if c.x == maze.size.x - 1 && c.y == maze.size.y - 1 {
-                return step_count;
-            }
-            if visited.insert(c) {
-                to_visit_next.extend(c.neighbours().iter().filter(|&n| maze.is_passable(n)));
-            }
+pub fn part_2(input: &str, size: Coord, time: usize) -> Option<Coord> {
+    let mut maze = Maze::new(input, size, time);
+    while maze.time_to_end().is_some() {
+        if !maze.tick() {
+            return None;
         }
-        step_count += 1;
     }
+    maze.maze_input.walls.get(maze.time - 1).copied()
 }
 
 #[cfg(test)]
@@ -119,7 +146,7 @@ mod tests {
     fn example_part_1() {
         assert_eq!(
             part_1(include_str!("../example_1.txt"), Coord { x: 7, y: 7 }, 12),
-            22
+            Some(22)
         );
     }
 
@@ -127,7 +154,23 @@ mod tests {
     fn challenge_part_1() {
         assert_eq!(
             part_1(include_str!("../input.txt"), Coord { x: 71, y: 71 }, 1024),
-            380
+            Some(380)
+        );
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(
+            part_2(include_str!("../example_1.txt"), Coord { x: 7, y: 7 }, 0),
+            Some(Coord { x: 6, y: 1 })
+        );
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(
+            part_2(include_str!("../input.txt"), Coord { x: 71, y: 71 }, 0),
+            Some(Coord { x: 26, y: 50 })
         );
     }
 }

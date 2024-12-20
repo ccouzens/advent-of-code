@@ -6,6 +6,8 @@ use nom::{
     sequence::separated_pair,
 };
 
+use rayon::prelude::*;
+
 fn count_permutations(design: &[char], patterns: &[Vec<char>]) -> usize {
     let mut perms = vec![0; design.len() + 1];
     perms[0] = 1;
@@ -24,7 +26,7 @@ pub fn part_1(input: &str) -> usize {
     let onsen = Onsen::parse(input);
     onsen
         .desired_designs
-        .iter()
+        .par_iter()
         .filter(|d| count_permutations(d, &onsen.towel_patterns) > 0)
         .count()
 }
@@ -33,7 +35,7 @@ pub fn part_2(input: &str) -> usize {
     let onsen = Onsen::parse(input);
     onsen
         .desired_designs
-        .iter()
+        .par_iter()
         .map(|d| count_permutations(d, &onsen.towel_patterns))
         .sum()
 }

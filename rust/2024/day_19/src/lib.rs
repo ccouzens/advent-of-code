@@ -1,3 +1,5 @@
+use std::iter::repeat_n;
+
 use nom::{
     branch::alt,
     bytes::complete::tag,
@@ -48,25 +50,18 @@ impl DesiredDesign {
         map(many1(Colour::parser()), Self)
     }
 
-    fn can_build_from_patterns(&self, patterns: &[TowelPattern]) -> bool {
-        let mut stack: Vec<Vec<&TowelPattern>> = vec![Vec::new()];
-        while let Some(patterns_in_design) = stack.pop() {
-            let len = patterns_in_design.iter().map(|p| p.0.len()).sum();
-            let remaining_design = &self.0[len..];
+    fn count_permutations(&self, patterns: &[TowelPattern]) -> usize {
+        let mut perms: Vec<usize> = repeat_n(0, self.0.len() + 1).collect();
+        perms[0] = 1;
+        for i in 0..self.0.len() {
+            let remaining_design = &self.0[i..];
             for pattern in patterns.iter() {
-                if remaining_design == pattern.0 {
-                    return true;
-                }
                 if remaining_design.starts_with(&pattern.0) {
-                    let mut new_patterns = patterns_in_design.clone();
-                    new_patterns.push(pattern);
-
-                    stack.push(new_patterns);
+                    perms[i + pattern.0.len()] += perms[i];
                 }
             }
         }
-
-        false
+        perms[self.0.len()]
     }
 }
 
@@ -75,8 +70,17 @@ pub fn part_1(input: &str) -> usize {
     onsen
         .desired_designs
         .iter()
-        .filter(|d| d.can_build_from_patterns(&onsen.towel_patterns))
+        .filter(|d| d.count_permutations(&onsen.towel_patterns) > 0)
         .count()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let onsen = Onsen::parse(input);
+    onsen
+        .desired_designs
+        .iter()
+        .map(|d| d.count_permutations(&onsen.towel_patterns))
+        .sum()
 }
 
 #[derive(Debug)]
@@ -118,5 +122,15 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 340);
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(part_2(include_str!("../example_1.txt")), 16);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(part_2(include_str!("../input.txt")), 717561822679428);
     }
 }

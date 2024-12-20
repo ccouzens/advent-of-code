@@ -12,38 +12,11 @@ struct Coord {
 }
 
 impl Coord {
-    fn neighbours(&self) -> [Self; 4] {
-        [self + [0, 1], self + [-1, 0], self + [1, 0], self + [0, -1]]
-    }
-
-    fn jump_1_neighbours(&self) -> [Self; 8] {
-        [
-            self + [0, -2],
-            self + [1, -1],
-            self + [2, 0],
-            self + [1, 1],
-            self + [0, 2],
-            self + [-1, 1],
-            self + [-2, 0],
-            self + [-1, -1],
-        ]
-    }
-
-    fn jump_2_neighbours(&self) -> [Self; 12] {
-        [
-            self + [0, -3],
-            self + [1, -2],
-            self + [2, -1],
-            self + [3, 0],
-            self + [2, 1],
-            self + [1, 2],
-            self + [0, 3],
-            self + [-1, 2],
-            self + [-2, 1],
-            self + [-3, 0],
-            self + [-2, -1],
-            self + [-1, -2],
-        ]
+    fn neighbours_within_distance(self, distance: Num) -> impl Iterator<Item = (Num, Self)> {
+        (-distance..=distance).flat_map(move |dy| {
+            (-distance + dy.abs()..=distance - dy.abs())
+                .map(move |dx| (dy.abs() + dx.abs(), &self + [dx, dy]))
+        })
     }
 }
 
@@ -114,7 +87,7 @@ impl Maze {
             for &c in std::mem::take(&mut explore_next).iter() {
                 if let Entry::Vacant(v) = distances.entry(c) {
                     v.insert(distance);
-                    for n in c.neighbours() {
+                    for (_, n) in c.neighbours_within_distance(1) {
                         if !self.is_wall(&n) {
                             explore_next.push(n);
                         }
@@ -129,7 +102,7 @@ impl Maze {
     }
 }
 
-pub fn part_1(input: &str, required_saving: Num) -> Num {
+pub fn puzzle(input: &str, required_saving: Num, skip_distance: Num) -> Num {
     let maze = Maze::parse(input);
     let distances_from_start = maze.distances_from_point(maze.start);
     let distances_from_end = maze.distances_from_point(maze.end);
@@ -137,9 +110,9 @@ pub fn part_1(input: &str, required_saving: Num) -> Num {
     let mut cheat_counts = 0;
 
     for (c, d) in distances_from_end.iter() {
-        for n in c.jump_1_neighbours().iter() {
-            if let Some(&sd) = distances_from_start.get(n) {
-                let jump_1_improvement = regular_distance - d - sd - 2;
+        for (skipped_distance, n) in c.neighbours_within_distance(skip_distance) {
+            if let Some(&sd) = distances_from_start.get(&n) {
+                let jump_1_improvement = regular_distance - d - sd - skipped_distance;
                 if jump_1_improvement >= required_saving {
                     cheat_counts += 1;
                 }
@@ -155,11 +128,21 @@ mod tests {
 
     #[test]
     fn example_part_1() {
-        assert_eq!(part_1(include_str!("../example_1.txt"), 12), 8);
+        assert_eq!(puzzle(include_str!("../example_1.txt"), 12, 2), 8);
     }
 
     #[test]
     fn challenge_part_1() {
-        assert_eq!(part_1(include_str!("../input.txt"), 100), 1395);
+        assert_eq!(puzzle(include_str!("../input.txt"), 100, 2), 1395);
+    }
+
+    #[test]
+    fn example_part_2() {
+        assert_eq!(puzzle(include_str!("../example_1.txt"), 72, 20), 29);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(puzzle(include_str!("../input.txt"), 100, 20), 993178);
     }
 }

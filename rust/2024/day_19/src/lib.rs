@@ -1,53 +1,30 @@
 use std::iter::repeat_n;
 
 use nom::{
-    branch::alt,
     bytes::complete::tag,
-    character::complete::{char, newline},
+    character::complete::{alpha1, newline},
     combinator::map,
-    multi::{many1, separated_list1},
+    multi::separated_list1,
     sequence::separated_pair,
 };
 
-#[derive(Debug, PartialEq)]
-enum Colour {
-    White,
-    Blue,
-    Black,
-    Red,
-    Green,
-}
-
-impl Colour {
-    fn parser<'a>(
-    ) -> impl FnMut(&'a str) -> Result<(&'a str, Self), nom::Err<nom::error::Error<&'a str>>> {
-        alt((
-            map(char('w'), |_| Self::White),
-            map(char('u'), |_| Self::Blue),
-            map(char('b'), |_| Self::Black),
-            map(char('r'), |_| Self::Red),
-            map(char('g'), |_| Self::Green),
-        ))
-    }
-}
-
 #[derive(Debug)]
-struct TowelPattern(Vec<Colour>);
+struct TowelPattern(Vec<char>);
 
 impl TowelPattern {
     fn parser<'a>(
     ) -> impl FnMut(&'a str) -> Result<(&'a str, Self), nom::Err<nom::error::Error<&'a str>>> {
-        map(many1(Colour::parser()), Self)
+        map(alpha1, |c: &str| Self(c.chars().collect()))
     }
 }
 
 #[derive(Debug)]
-struct DesiredDesign(Vec<Colour>);
+struct DesiredDesign(Vec<char>);
 
 impl DesiredDesign {
     fn parser<'a>(
     ) -> impl FnMut(&'a str) -> Result<(&'a str, Self), nom::Err<nom::error::Error<&'a str>>> {
-        map(many1(Colour::parser()), Self)
+        map(alpha1, |c: &str| Self(c.chars().collect()))
     }
 
     fn count_permutations(&self, patterns: &[TowelPattern]) -> usize {

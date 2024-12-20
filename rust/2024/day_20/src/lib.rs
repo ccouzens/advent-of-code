@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::{
     collections::{hash_map::Entry, HashMap},
     ops::Add,
@@ -107,19 +108,21 @@ pub fn puzzle(input: &str, required_saving: Num, skip_distance: Num) -> Num {
     let distances_from_start = maze.distances_from_point(maze.start);
     let distances_from_end = maze.distances_from_point(maze.end);
     let regular_distance = distances_from_start[&maze.end];
-    let mut cheat_counts = 0;
 
-    for (c, d) in distances_from_end.iter() {
-        for (skipped_distance, n) in c.neighbours_within_distance(skip_distance) {
-            if let Some(&sd) = distances_from_start.get(&n) {
-                let jump_1_improvement = regular_distance - d - sd - skipped_distance;
-                if jump_1_improvement >= required_saving {
-                    cheat_counts += 1;
+    distances_from_end
+        .par_iter()
+        .map(|(c, &d)| {
+            let mut cheat_counts = 0;
+            for (skipped_distance, n) in c.neighbours_within_distance(skip_distance) {
+                if let Some(&sd) = distances_from_start.get(&n) {
+                    if regular_distance - d - sd - skipped_distance - required_saving >= 0 {
+                        cheat_counts += 1;
+                    }
                 }
             }
-        }
-    }
-    cheat_counts
+            cheat_counts
+        })
+        .sum()
 }
 
 #[cfg(test)]

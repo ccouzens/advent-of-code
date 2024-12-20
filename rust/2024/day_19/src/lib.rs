@@ -6,28 +6,18 @@ use nom::{
     sequence::separated_pair,
 };
 
-#[derive(Debug)]
-struct DesiredDesign(Vec<char>);
-
-impl DesiredDesign {
-    fn parser<'a>(
-    ) -> impl FnMut(&'a str) -> Result<(&'a str, Self), nom::Err<nom::error::Error<&'a str>>> {
-        map(alpha1, |c: &str| Self(c.chars().collect()))
-    }
-
-    fn count_permutations(&self, patterns: &[Vec<char>]) -> usize {
-        let mut perms = vec![0; self.0.len() + 1];
-        perms[0] = 1;
-        for i in 0..self.0.len() {
-            let remaining_design = &self.0[i..];
-            for pattern in patterns.iter() {
-                if remaining_design.starts_with(pattern) {
-                    perms[i + pattern.len()] += perms[i];
-                }
+fn count_permutations(design: &[char], patterns: &[Vec<char>]) -> usize {
+    let mut perms = vec![0; design.len() + 1];
+    perms[0] = 1;
+    for i in 0..design.len() {
+        let remaining_design = &design[i..];
+        for pattern in patterns.iter() {
+            if remaining_design.starts_with(pattern) {
+                perms[i + pattern.len()] += perms[i];
             }
         }
-        perms[self.0.len()]
     }
+    perms[design.len()]
 }
 
 pub fn part_1(input: &str) -> usize {
@@ -35,7 +25,7 @@ pub fn part_1(input: &str) -> usize {
     onsen
         .desired_designs
         .iter()
-        .filter(|d| d.count_permutations(&onsen.towel_patterns) > 0)
+        .filter(|d| count_permutations(d, &onsen.towel_patterns) > 0)
         .count()
 }
 
@@ -44,14 +34,14 @@ pub fn part_2(input: &str) -> usize {
     onsen
         .desired_designs
         .iter()
-        .map(|d| d.count_permutations(&onsen.towel_patterns))
+        .map(|d| count_permutations(d, &onsen.towel_patterns))
         .sum()
 }
 
 #[derive(Debug)]
 struct Onsen {
     towel_patterns: Vec<Vec<char>>,
-    desired_designs: Vec<DesiredDesign>,
+    desired_designs: Vec<Vec<char>>,
 }
 
 impl Onsen {
@@ -61,7 +51,7 @@ impl Onsen {
             separated_pair(
                 separated_list1(tag(", "), map(alpha1, |c: &str| c.chars().collect())),
                 tag("\n\n"),
-                separated_list1(newline, DesiredDesign::parser()),
+                separated_list1(newline, map(alpha1, |c: &str| c.chars().collect())),
             ),
             |(towel_patterns, desired_designs)| Self {
                 towel_patterns,

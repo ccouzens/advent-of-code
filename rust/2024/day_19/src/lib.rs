@@ -1,5 +1,3 @@
-use std::iter::repeat_n;
-
 use nom::{
     bytes::complete::tag,
     character::complete::{alpha1, newline},
@@ -7,16 +5,6 @@ use nom::{
     multi::separated_list1,
     sequence::separated_pair,
 };
-
-#[derive(Debug)]
-struct TowelPattern(Vec<char>);
-
-impl TowelPattern {
-    fn parser<'a>(
-    ) -> impl FnMut(&'a str) -> Result<(&'a str, Self), nom::Err<nom::error::Error<&'a str>>> {
-        map(alpha1, |c: &str| Self(c.chars().collect()))
-    }
-}
 
 #[derive(Debug)]
 struct DesiredDesign(Vec<char>);
@@ -27,14 +15,14 @@ impl DesiredDesign {
         map(alpha1, |c: &str| Self(c.chars().collect()))
     }
 
-    fn count_permutations(&self, patterns: &[TowelPattern]) -> usize {
-        let mut perms: Vec<usize> = repeat_n(0, self.0.len() + 1).collect();
+    fn count_permutations(&self, patterns: &[Vec<char>]) -> usize {
+        let mut perms = vec![0; self.0.len() + 1];
         perms[0] = 1;
         for i in 0..self.0.len() {
             let remaining_design = &self.0[i..];
             for pattern in patterns.iter() {
-                if remaining_design.starts_with(&pattern.0) {
-                    perms[i + pattern.0.len()] += perms[i];
+                if remaining_design.starts_with(pattern) {
+                    perms[i + pattern.len()] += perms[i];
                 }
             }
         }
@@ -62,7 +50,7 @@ pub fn part_2(input: &str) -> usize {
 
 #[derive(Debug)]
 struct Onsen {
-    towel_patterns: Vec<TowelPattern>,
+    towel_patterns: Vec<Vec<char>>,
     desired_designs: Vec<DesiredDesign>,
 }
 
@@ -71,7 +59,7 @@ impl Onsen {
     ) -> impl FnMut(&'a str) -> Result<(&'a str, Self), nom::Err<nom::error::Error<&'a str>>> {
         map(
             separated_pair(
-                separated_list1(tag(", "), TowelPattern::parser()),
+                separated_list1(tag(", "), map(alpha1, |c: &str| c.chars().collect())),
                 tag("\n\n"),
                 separated_list1(newline, DesiredDesign::parser()),
             ),

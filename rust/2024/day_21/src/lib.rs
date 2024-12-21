@@ -45,10 +45,10 @@ impl DirectionalKeypadButton {
 
     fn direction(&self) -> Coord {
         match self {
-            DirectionalKeypadButton::Up => Coord { x: 0, y: -1 },
+            DirectionalKeypadButton::Up => Coord { x: 0, y: 1 },
             DirectionalKeypadButton::A => Coord { x: 0, y: 0 },
             DirectionalKeypadButton::Left => Coord { x: -1, y: 0 },
-            DirectionalKeypadButton::Down => Coord { x: 0, y: 1 },
+            DirectionalKeypadButton::Down => Coord { x: 0, y: -1 },
             DirectionalKeypadButton::Right => Coord { x: 1, y: 0 },
         }
     }
@@ -184,7 +184,6 @@ fn complexity(code: &str) -> usize {
         .collect();
     let shortest_sequence = input_code(&encoded);
     let numeric_part: usize = code[0..3].parse().unwrap();
-    dbg!((shortest_sequence, numeric_part));
     numeric_part * shortest_sequence
 }
 
@@ -207,7 +206,6 @@ mod tests {
 
     #[test]
     fn challenge_part_1() {
-        assert!(part_1(include_str!("../input.txt")) > 138044);
-        // assert_eq!(part_1(include_str!("../input.txt")), 0);
+        assert_eq!(part_1(include_str!("../input.txt")), 138764);
     }
 }

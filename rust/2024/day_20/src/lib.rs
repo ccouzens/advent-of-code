@@ -1,8 +1,5 @@
 use rayon::prelude::*;
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    ops::Add,
-};
+use std::collections::{hash_map::Entry, HashMap};
 
 type Num = i32;
 
@@ -15,8 +12,15 @@ struct Coord {
 impl Coord {
     fn neighbours_within_distance(self, distance: Num) -> impl Iterator<Item = (Num, Self)> {
         (-distance..=distance).flat_map(move |dy| {
-            (-distance + dy.abs()..=distance - dy.abs())
-                .map(move |dx| (dy.abs() + dx.abs(), &self + [dx, dy]))
+            (-distance + dy.abs()..=distance - dy.abs()).map(move |dx| {
+                (
+                    dy.abs() + dx.abs(),
+                    Self {
+                        x: self.x + dx,
+                        y: self.y + dy,
+                    },
+                )
+            })
         })
     }
 }
@@ -27,17 +31,6 @@ struct Maze {
     walls: Vec<bool>,
     start: Coord,
     end: Coord,
-}
-
-impl Add<[Num; 2]> for &Coord {
-    type Output = Coord;
-
-    fn add(self, other: [Num; 2]) -> Coord {
-        Coord {
-            x: self.x + other[0],
-            y: self.y + other[1],
-        }
-    }
 }
 
 impl Maze {

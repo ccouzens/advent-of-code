@@ -28,18 +28,22 @@ pub fn part_1(input: &str) -> Num {
 pub fn part_2(input: &str) -> Num {
     let mut overall_totals: BTreeMap<[Num; 4], Num> = BTreeMap::new();
     for hiding_spot in parse(input) {
-        let mut local_totals: BTreeMap<[Num; 4], Num> = BTreeMap::new();
         let prices: Vec<_> = secret_evolution(hiding_spot).map(|i| i % 10).collect();
-        for window in prices.windows(5) {
-            local_totals
-                .entry([
-                    window[1] - window[0],
-                    window[2] - window[1],
-                    window[3] - window[2],
-                    window[4] - window[3],
-                ])
-                .or_insert(window[4]);
-        }
+        let local_totals: BTreeMap<_, _> = prices
+            .windows(5)
+            .rev()
+            .map(|window| {
+                (
+                    [
+                        window[1] - window[0],
+                        window[2] - window[1],
+                        window[3] - window[2],
+                        window[4] - window[3],
+                    ],
+                    window[4],
+                )
+            })
+            .collect();
         for (&seq, &bananas) in local_totals.iter() {
             *overall_totals.entry(seq).or_default() += bananas;
         }

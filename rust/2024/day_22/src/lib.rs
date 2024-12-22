@@ -19,10 +19,6 @@ fn secret_evolution(mut secret: Num) -> impl Iterator<Item = Num> {
     }))
 }
 
-fn price_evolution(secret: Num) -> impl Iterator<Item = Num> {
-    secret_evolution(secret).map(|s| s % 10)
-}
-
 pub fn part_1(input: &str) -> Num {
     parse(input)
         .map(|secret| secret_evolution(secret).last().unwrap())
@@ -33,7 +29,7 @@ pub fn part_2(input: &str) -> Num {
     let mut overall_totals: BTreeMap<[Num; 4], Num> = BTreeMap::new();
     for hiding_spot in parse(input) {
         let mut local_totals: BTreeMap<[Num; 4], Num> = BTreeMap::new();
-        let prices: Vec<_> = price_evolution(hiding_spot).collect();
+        let prices: Vec<_> = secret_evolution(hiding_spot).map(|i| i % 10).collect();
         for window in prices.windows(5) {
             local_totals
                 .entry([

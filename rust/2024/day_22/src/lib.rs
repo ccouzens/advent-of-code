@@ -26,7 +26,7 @@ pub fn part_1(input: &str) -> Num {
 }
 
 pub fn part_2(input: &str) -> Num {
-    let mut overall_totals: BTreeMap<[Num; 4], Num> = BTreeMap::new();
+    let mut overall_totals = BTreeMap::new();
     for hiding_spot in parse(input) {
         let prices: Vec<_> = secret_evolution(hiding_spot).map(|i| i % 10).collect();
         let local_totals: BTreeMap<_, _> = prices
@@ -34,12 +34,10 @@ pub fn part_2(input: &str) -> Num {
             .rev()
             .map(|window| {
                 (
-                    [
-                        window[1] - window[0],
-                        window[2] - window[1],
-                        window[3] - window[2],
-                        window[4] - window[3],
-                    ],
+                    ((window[1] - window[0] + 9) << 15)
+                        + ((window[2] - window[1] + 9) << 10)
+                        + ((window[3] - window[2] + 9) << 5)
+                        + ((window[4] - window[3] + 9) << 0),
                     window[4],
                 )
             })

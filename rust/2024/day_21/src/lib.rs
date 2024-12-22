@@ -44,7 +44,7 @@ impl DirectionalKeypadButton {
         }
     }
 
-    fn to_coord(&self) -> Coord {
+    fn as_coord(&self) -> Coord {
         match self {
             DirectionalKeypadButton::Up => Coord { x: -1, y: 0 },
             DirectionalKeypadButton::A => Coord { x: 0, y: 0 },
@@ -116,8 +116,8 @@ fn populate_move_times(levels: usize) -> HashMap<MoveTime, usize> {
     let mut move_times = HashMap::new();
     for start in DIRECTION_KEYPAD_BUTTONS {
         for end in DIRECTION_KEYPAD_BUTTONS {
-            let start_pos = start.to_coord();
-            let end_pos = end.to_coord();
+            let start_pos = start.as_coord();
+            let end_pos = end.as_coord();
             move_times.insert(
                 MoveTime {
                     level: 0,
@@ -167,7 +167,7 @@ fn populate_move_times(levels: usize) -> HashMap<MoveTime, usize> {
 
                     for direction in DIRECTIONAL_KEYPAD_BUTTONS {
                         if let Some(resulting_button) = DirectionalKeypadButton::at_coord(
-                            &(&button.to_coord() + &direction.direction()),
+                            &(&button.as_coord() + &direction.direction()),
                         ) {
                             unvisited.push((
                                 Reverse(

@@ -79,9 +79,9 @@ impl NumberPadButton {
     }
 }
 
-#[derive(Debug, Default, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Default, Hash, PartialEq, Eq, Clone)]
 struct RobotsState {
-    depressurized_robot: Coord,
+    button_robot: Coord,
     freezing_robot: Coord,
     radiation_robot: Coord,
     presses: usize,
@@ -89,54 +89,47 @@ struct RobotsState {
 
 impl RobotsState {
     fn push_button(
-        self,
+        mut self,
         button: DirectionalKeypadButton,
         desired_presses: &[NumberPadButton],
     ) -> Option<Self> {
-        fn control_depressurized_robot(
+        fn control_button_robot(
             button: DirectionalKeypadButton,
-            robots_state: RobotsState,
+            mut robots_state: RobotsState,
             desired_presses: &[NumberPadButton],
         ) -> Option<RobotsState> {
-            let coord = &robots_state.depressurized_robot + &button.direction();
+            let coord = &robots_state.button_robot + &button.direction();
             let button_under_pointer = NumberPadButton::at_coord(&coord)?;
-            let mut state = robots_state;
-            state.depressurized_robot = coord;
+            robots_state.button_robot = coord;
             if button == DirectionalKeypadButton::A {
-                if button_under_pointer != desired_presses[state.presses] {
+                if button_under_pointer != desired_presses[robots_state.presses] {
                     return None;
                 }
-                state.presses += 1;
+                robots_state.presses += 1;
             }
-            Some(state)
+            Some(robots_state)
         }
         fn control_freezing_robot(
             button: DirectionalKeypadButton,
-            arm_states: RobotsState,
+            mut arm_states: RobotsState,
             desired_presses: &[NumberPadButton],
         ) -> Option<RobotsState> {
             let coord = &arm_states.freezing_robot + &button.direction();
             let button_under_pointer = DirectionalKeypadButton::at_coord(&coord)?;
-            let state = RobotsState {
-                freezing_robot: coord,
-                ..arm_states
-            };
+            arm_states.freezing_robot = coord;
             if button == DirectionalKeypadButton::A {
-                control_depressurized_robot(button_under_pointer, state, desired_presses)
+                control_button_robot(button_under_pointer, arm_states, desired_presses)
             } else {
-                Some(state)
+                Some(arm_states)
             }
         }
         let coord = &self.radiation_robot + &button.direction();
         let button_under_pointer = DirectionalKeypadButton::at_coord(&coord)?;
-        let state = RobotsState {
-            radiation_robot: coord,
-            ..self
-        };
+        self.radiation_robot = coord;
         if button == DirectionalKeypadButton::A {
-            control_freezing_robot(button_under_pointer, state, desired_presses)
+            control_freezing_robot(button_under_pointer, self, desired_presses)
         } else {
-            Some(state)
+            Some(self)
         }
     }
 }
@@ -145,11 +138,11 @@ fn input_code(goal: &[NumberPadButton]) -> usize {
     let mut time_to_state: HashMap<RobotsState, usize> = HashMap::new();
     let mut explore_next: Vec<RobotsState> = vec![RobotsState::default()];
     for time in 0.. {
-        for &s in std::mem::take(&mut explore_next).iter() {
+        for s in std::mem::take(&mut explore_next).iter() {
             if s.presses == goal.len() {
                 return time;
             }
-            if let Entry::Vacant(v) = time_to_state.entry(s) {
+            if let Entry::Vacant(v) = time_to_state.entry(s.clone()) {
                 v.insert(time);
                 for b in [
                     DirectionalKeypadButton::Up,
@@ -158,7 +151,7 @@ fn input_code(goal: &[NumberPadButton]) -> usize {
                     DirectionalKeypadButton::Right,
                     DirectionalKeypadButton::A,
                 ] {
-                    if let Some(next_state) = s.push_button(b, goal) {
+                    if let Some(next_state) = s.clone().push_button(b, goal) {
                         explore_next.push(next_state);
                     }
                 }

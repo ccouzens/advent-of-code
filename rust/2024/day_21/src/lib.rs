@@ -1,11 +1,12 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap, HashSet},
     ops::Add,
 };
 
-type Num = i32;
+type Num = i64;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Coord {
     x: Num,
     y: Num,
@@ -22,7 +23,7 @@ impl Add for &Coord {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, PartialOrd, Ord)]
 enum DirectionalKeypadButton {
     Up,
     A,
@@ -43,6 +44,16 @@ impl DirectionalKeypadButton {
         }
     }
 
+    fn to_coord(&self) -> Coord {
+        match self {
+            DirectionalKeypadButton::Up => Coord { x: -1, y: 0 },
+            DirectionalKeypadButton::A => Coord { x: 0, y: 0 },
+            DirectionalKeypadButton::Left => Coord { x: -2, y: -1 },
+            DirectionalKeypadButton::Down => Coord { x: -1, y: -1 },
+            DirectionalKeypadButton::Right => Coord { x: 0, y: -1 },
+        }
+    }
+
     fn direction(&self) -> Coord {
         match self {
             DirectionalKeypadButton::Up => Coord { x: 0, y: 1 },
@@ -54,7 +65,7 @@ impl DirectionalKeypadButton {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, PartialOrd, Ord)]
 enum NumberPadButton {
     Digit(u8),
     A,
@@ -79,112 +90,179 @@ impl NumberPadButton {
     }
 }
 
-#[derive(Debug, Default, Hash, PartialEq, Eq, Clone)]
-struct RobotsState {
-    button_robot: Coord,
-    freezing_robot: Coord,
-    radiation_robot: Coord,
-    presses: usize,
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+struct MoveTime {
+    level: usize,
+    start: DirectionalKeypadButton,
+    end: DirectionalKeypadButton,
 }
 
-impl RobotsState {
-    fn push_button(
-        mut self,
-        button: DirectionalKeypadButton,
-        desired_presses: &[NumberPadButton],
-    ) -> Option<Self> {
-        fn control_button_robot(
-            button: DirectionalKeypadButton,
-            mut robots_state: RobotsState,
-            desired_presses: &[NumberPadButton],
-        ) -> Option<RobotsState> {
-            let coord = &robots_state.button_robot + &button.direction();
-            let button_under_pointer = NumberPadButton::at_coord(&coord)?;
-            robots_state.button_robot = coord;
-            if button == DirectionalKeypadButton::A {
-                if button_under_pointer != desired_presses[robots_state.presses] {
-                    return None;
-                }
-                robots_state.presses += 1;
-            }
-            Some(robots_state)
-        }
-        fn control_freezing_robot(
-            button: DirectionalKeypadButton,
-            mut arm_states: RobotsState,
-            desired_presses: &[NumberPadButton],
-        ) -> Option<RobotsState> {
-            let coord = &arm_states.freezing_robot + &button.direction();
-            let button_under_pointer = DirectionalKeypadButton::at_coord(&coord)?;
-            arm_states.freezing_robot = coord;
-            if button == DirectionalKeypadButton::A {
-                control_button_robot(button_under_pointer, arm_states, desired_presses)
-            } else {
-                Some(arm_states)
-            }
-        }
-        let coord = &self.radiation_robot + &button.direction();
-        let button_under_pointer = DirectionalKeypadButton::at_coord(&coord)?;
-        self.radiation_robot = coord;
-        if button == DirectionalKeypadButton::A {
-            control_freezing_robot(button_under_pointer, self, desired_presses)
-        } else {
-            Some(self)
+const DIRECTION_KEYPAD_BUTTONS: [DirectionalKeypadButton; 5] = [
+    DirectionalKeypadButton::Up,
+    DirectionalKeypadButton::A,
+    DirectionalKeypadButton::Left,
+    DirectionalKeypadButton::Down,
+    DirectionalKeypadButton::Right,
+];
+
+const DIRECTIONAL_KEYPAD_BUTTONS: [DirectionalKeypadButton; 4] = [
+    DirectionalKeypadButton::Up,
+    DirectionalKeypadButton::Left,
+    DirectionalKeypadButton::Down,
+    DirectionalKeypadButton::Right,
+];
+
+fn populate_move_times(levels: usize) -> HashMap<MoveTime, usize> {
+    let mut move_times = HashMap::new();
+    for start in DIRECTION_KEYPAD_BUTTONS {
+        for end in DIRECTION_KEYPAD_BUTTONS {
+            let start_pos = start.to_coord();
+            let end_pos = end.to_coord();
+            move_times.insert(
+                MoveTime {
+                    level: 0,
+                    start,
+                    end,
+                },
+                (start_pos.x.abs_diff(end_pos.x) + start_pos.y.abs_diff(end_pos.y) + 1) as usize,
+            );
         }
     }
-}
+    for level in 1..levels {
+        for start in DIRECTION_KEYPAD_BUTTONS {
+            for end in DIRECTION_KEYPAD_BUTTONS {
+                let mut visited =
+                    HashSet::<(DirectionalKeypadButton, bool, DirectionalKeypadButton)>::new();
+                let mut unvisited = BinaryHeap::<(
+                    Reverse<usize>,
+                    DirectionalKeypadButton,
+                    bool,
+                    DirectionalKeypadButton,
+                )>::new();
+                unvisited.push((Reverse(0), DirectionalKeypadButton::A, false, start));
+                while let Some((Reverse(time), parent, pressed, button)) = unvisited.pop() {
+                    if pressed && button == end {
+                        move_times.insert(MoveTime { level, start, end }, time);
+                        break;
+                    }
 
-fn input_code(goal: &[NumberPadButton]) -> usize {
-    let mut time_to_state: HashMap<RobotsState, usize> = HashMap::new();
-    let mut explore_next: Vec<RobotsState> = vec![RobotsState::default()];
-    for time in 0.. {
-        for s in std::mem::take(&mut explore_next).iter() {
-            if s.presses == goal.len() {
-                return time;
-            }
-            if let Entry::Vacant(v) = time_to_state.entry(s.clone()) {
-                v.insert(time);
-                for b in [
-                    DirectionalKeypadButton::Up,
-                    DirectionalKeypadButton::Down,
-                    DirectionalKeypadButton::Left,
-                    DirectionalKeypadButton::Right,
-                    DirectionalKeypadButton::A,
-                ] {
-                    if let Some(next_state) = s.clone().push_button(b, goal) {
-                        explore_next.push(next_state);
+                    if !visited.insert((parent, pressed, button)) {
+                        continue;
+                    }
+
+                    if button == end {
+                        unvisited.push((
+                            Reverse(
+                                time + move_times[&MoveTime {
+                                    level: level - 1,
+                                    start: parent,
+                                    end: DirectionalKeypadButton::A,
+                                }],
+                            ),
+                            DirectionalKeypadButton::A,
+                            true,
+                            button,
+                        ));
+                    }
+
+                    for direction in DIRECTIONAL_KEYPAD_BUTTONS {
+                        if let Some(resulting_button) = DirectionalKeypadButton::at_coord(
+                            &(&button.to_coord() + &direction.direction()),
+                        ) {
+                            unvisited.push((
+                                Reverse(
+                                    time + move_times[&MoveTime {
+                                        level: level - 1,
+                                        start: parent,
+                                        end: direction,
+                                    }],
+                                ),
+                                direction,
+                                false,
+                                resulting_button,
+                            ));
+                        }
                     }
                 }
             }
         }
-        if explore_next.is_empty() {
-            panic!();
+    }
+    move_times
+}
+
+fn input_code(
+    sequence: &[NumberPadButton],
+    depth: usize,
+    move_times: &HashMap<MoveTime, usize>,
+) -> usize {
+    let mut visited: HashSet<(usize, DirectionalKeypadButton, Coord)> = HashSet::new();
+    let mut unvisited =
+        BinaryHeap::<(Reverse<usize>, usize, DirectionalKeypadButton, Coord)>::new();
+    unvisited.push((Reverse(0), 0, DirectionalKeypadButton::A, Coord::default()));
+    while let Some((Reverse(time), inputted, parent, arm)) = unvisited.pop() {
+        if inputted == sequence.len() {
+            return time;
+        }
+
+        if !visited.insert((inputted, parent, arm)) {
+            continue;
+        }
+
+        if let Some(button) = NumberPadButton::at_coord(&arm) {
+            if button == sequence[inputted] {
+                unvisited.push((
+                    Reverse(
+                        time + move_times[&MoveTime {
+                            level: depth - 1,
+                            start: parent,
+                            end: DirectionalKeypadButton::A,
+                        }],
+                    ),
+                    inputted + 1,
+                    DirectionalKeypadButton::A,
+                    arm,
+                ));
+            }
+
+            for direction in DIRECTIONAL_KEYPAD_BUTTONS {
+                unvisited.push((
+                    Reverse(
+                        time + move_times[&MoveTime {
+                            level: depth - 1,
+                            start: parent,
+                            end: direction,
+                        }],
+                    ),
+                    inputted,
+                    direction,
+                    &arm + &direction.direction(),
+                ));
+            }
         }
     }
-    unreachable!();
+    panic!();
 }
 
-fn complexity(code: &str) -> usize {
-    let encoded: Vec<NumberPadButton> = code
-        .bytes()
-        .map(|b| {
-            if b == b'A' {
-                NumberPadButton::A
-            } else {
-                NumberPadButton::Digit(b - b'0')
-            }
-        })
-        .collect();
-    let shortest_sequence = input_code(&encoded);
-    let numeric_part: usize = code[0..3].parse().unwrap();
-    numeric_part * shortest_sequence
-}
-
-pub fn part_1(input: &str) -> usize {
+pub fn complexity(input: &str, depth: usize) -> usize {
+    let move_times = populate_move_times(depth);
     input
         .lines()
         .filter(|l| !l.is_empty())
-        .map(complexity)
+        .map(|code| {
+            let encoded: Vec<NumberPadButton> = code
+                .bytes()
+                .map(|b| {
+                    if b == b'A' {
+                        NumberPadButton::A
+                    } else {
+                        NumberPadButton::Digit(b - b'0')
+                    }
+                })
+                .collect();
+            let shortest_sequence = input_code(&encoded, depth, &move_times);
+            let numeric_part: usize = code[0..3].parse().unwrap();
+            numeric_part * shortest_sequence
+        })
         .sum()
 }
 
@@ -194,11 +272,19 @@ mod tests {
 
     #[test]
     fn example_part_1() {
-        assert_eq!(part_1(include_str!("../example_1.txt")), 126384);
+        assert_eq!(complexity(include_str!("../example_1.txt"), 2), 126384);
     }
 
     #[test]
     fn challenge_part_1() {
-        assert_eq!(part_1(include_str!("../input.txt")), 138764);
+        assert_eq!(complexity(include_str!("../input.txt"), 2), 138764);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        assert_eq!(
+            complexity(include_str!("../input.txt"), 25),
+            169137886514152
+        );
     }
 }

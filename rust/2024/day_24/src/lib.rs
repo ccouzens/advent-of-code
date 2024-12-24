@@ -97,6 +97,27 @@ impl<'a> PuzzleInput<'a> {
         memo.insert(wire, v);
         v
     }
+
+    fn equation_of_wire_with_carry(&self, mut wire: &'a str, swaps: &[[&'a str; 2]]) -> String {
+        if let Some(_) = self.inputs.get(wire) {
+            return wire.to_string();
+        }
+
+        if let Some(s) = swaps.iter().find(|s| s[0] == wire) {
+            wire = s[1];
+        } else if let Some(s) = swaps.iter().find(|s| s[1] == wire) {
+            wire = s[0];
+        }
+        let gate_input = self.gates[wire];
+        let input_a = self.equation_of_wire_with_carry(gate_input.inputs[0], swaps);
+        let input_b = self.equation_of_wire_with_carry(gate_input.inputs[1], swaps);
+        match gate_input.gate {
+            GateInput::And => format!("({} & {})", input_a, input_b),
+            GateInput::Or => format!("carry"),
+            // GateInput::Or => format!("({} | {})", input_a, input_b),
+            GateInput::Xor => format!("({} ^ {})", input_a, input_b),
+        }
+    }
 }
 
 pub fn part_1(input: &str) -> u64 {
@@ -110,6 +131,25 @@ pub fn part_1(input: &str) -> u64 {
         }
     }
     result
+}
+
+pub fn part_2(input: &str) {
+    let puzzle = PuzzleInput::parse(input);
+    for i in 0..45 {
+        let start = format!("z{:02}", i);
+        dbg!((
+            i,
+            puzzle.equation_of_wire_with_carry(
+                &start,
+                &[
+                    ["vss", "z14"],
+                    ["kdh", "hjf"],
+                    ["z31", "kpp"],
+                    ["z35", "sgj"]
+                ]
+            )
+        ));
+    }
 }
 
 #[cfg(test)]
@@ -129,5 +169,18 @@ mod tests {
     #[test]
     fn challenge_part_1() {
         assert_eq!(part_1(include_str!("../input.txt")), 51837135476040);
+    }
+
+    #[test]
+    fn challenge_part_2() {
+        let swaps = [
+            ["vss", "z14"],
+            ["kdh", "hjf"],
+            ["z31", "kpp"],
+            ["z35", "sgj"],
+        ];
+        let mut flat = swaps.as_flattened().to_vec();
+        flat.sort();
+        assert_eq!(flat.join(","), "hjf,kdh,kpp,sgj,vss,z14,z31,z35");
     }
 }

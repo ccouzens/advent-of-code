@@ -9,4 +9,5 @@ void main(List<String> arguments) async {
       .transform(const LineSplitter())
       .first;
   print(day_01.part1(sequence));
+  print(day_01.part2(sequence));
 }

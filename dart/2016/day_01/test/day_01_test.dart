@@ -13,4 +13,8 @@ void main() {
   test('part 1 example 3', () {
     expect(part1("R5, L5, R5, R3"), 12);
   });
+
+  test('part 2 example 1', () {
+    expect(part2("R8, R4, R4, R8"), 4);
+  });
 }

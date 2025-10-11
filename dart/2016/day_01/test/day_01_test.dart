@@ -2,7 +2,15 @@ import 'package:day_01/day_01.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('calculate', () {
-    expect(calculate(), 42);
+  test('part 1 example 1', () {
+    expect(part1("R2, L3"), 5);
+  });
+
+  test('part 1 example 2', () {
+    expect(part1("R2, R2, R2"), 2);
+  });
+
+  test('part 1 example 3', () {
+    expect(part1("R5, L5, R5, R3"), 12);
   });
 }

@@ -1,4 +1,4 @@
-import 'package:console/console.dart';
+import 'package:day_01/day_01.dart';
 import 'package:test/test.dart';
 
 void main() {

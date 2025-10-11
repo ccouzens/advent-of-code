@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:day_01/day_01.dart' as day_01;
 
-void main(List<String> arguments) {
-  String sequence = stdin.readLineSync() ?? '';
+void main(List<String> arguments) async {
+  String sequence = await stdin
+      .transform(utf8.decoder)
+      .transform(const LineSplitter())
+      .first;
   print(day_01.part1(sequence));
 }

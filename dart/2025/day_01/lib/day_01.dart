@@ -18,12 +18,9 @@ int part2(List<String> sequence) {
   for (var rotation in sequence) {
     int direction = rotation[0] == "L" ? -1 : 1;
     var magnitude = int.parse(rotation.substring(1));
-    if (magnitude >= 100) {
-      zeros += magnitude ~/ 100;
-      magnitude %= 100;
-    }
+    zeros += magnitude ~/ 100;
 
-    int unmodulatedPostRotation = dial + direction * magnitude;
+    int unmodulatedPostRotation = dial + direction * (magnitude % 100);
     if (unmodulatedPostRotation >= 100 ||
         (unmodulatedPostRotation <= 0 && dial != 0)) {
       zeros++;

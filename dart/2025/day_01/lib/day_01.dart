@@ -3,7 +3,7 @@ int part1(List<String> sequence) {
   int zeros = 0;
   for (var rotation in sequence) {
     int direction = rotation[0] == "L" ? -1 : 1;
-    var magnitude = int.parse(rotation.substring(1));
+    int magnitude = int.parse(rotation.substring(1));
     dial = (dial + direction * magnitude) % 100;
     if (dial == 0) {
       zeros += 1;
@@ -17,7 +17,7 @@ int part2(List<String> sequence) {
   int zeros = 0;
   for (var rotation in sequence) {
     int direction = rotation[0] == "L" ? -1 : 1;
-    var magnitude = int.parse(rotation.substring(1));
+    int magnitude = int.parse(rotation.substring(1));
     zeros += magnitude ~/ 100;
 
     int unmodulatedPostRotation = dial + direction * (magnitude % 100);
